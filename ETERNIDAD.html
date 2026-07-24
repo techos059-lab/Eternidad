@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Nuestro Jardín Eterno</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;1,300;1,400&family=Quicksand:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html,body{width:100%;height:100%;overflow:hidden;background:#050208;font-family:'Quicksand',sans-serif;}
+    canvas{display:block;position:fixed;top:0;left:0;width:100%;height:100%;z-index:1;}
+
+    #modal{
+      position:fixed;inset:0;z-index:9999;
+      display:flex;justify-content:center;align-items:center;
+      background: linear-gradient(135deg, #1a0b2e 0%, #3d1435 100%);
+      transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    #modal.oculto{opacity:0;pointer-events:none;}
+
+    .card {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 30px;
+      padding: 30px;
+      width: min(350px, 90vw);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 10px 40px rgba(244, 63, 94, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      animation: floating 4s ease-in-out infinite;
+    }
+
+    @keyframes floating {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .card-img-wrap {
+      width: 100%;
+      border-radius: 20px;
+      overflow: hidden;
+      margin-bottom: 25px;
+      aspect-ratio: 1/1;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    }
+    .card-img-wrap img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+    }
+
+    .card-quote {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-weight: 400;
+      font-size: clamp(1.2rem, 4.8vw, 1.45rem);
+      color: #2e1026;
+      text-align: center;
+      line-height: 1.4;
+      margin-bottom: 12px;
+    }
+    
+    .card-sub {
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: #be123c;
+      margin-bottom: 28px;
+    }
+
+    #btn-entrar {
+      width: 100%;
+      font-family: 'Quicksand', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      padding: 1.1rem 0;
+      background: #be123c;
+      color: #fff;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(190, 18, 60, 0.4);
+    }
+    #btn-entrar:hover {
+      background: #e11d48;
+      transform: scale(1.02);
+      box-shadow: 0 6px 20px rgba(225, 29, 72, 0.6);
+    }
+
+    .top-text {
+      position: fixed; top: 6%; left: 50%; transform: translateX(-50%);
+      font-family: 'Cormorant Garamond', serif; font-style: italic;
+      font-size: clamp(1.3rem, 4vw, 2.2rem);
+      color: #fecdd3; z-index: 10; pointer-events: none;
+      text-shadow: 0 0 15px rgba(244, 63, 94, 0.6);
+      display: none; text-align: center; width: 90%;
+    }
+
+    #contador-contenedor {
+      position: fixed;
+      bottom: 5%;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      pointer-events: none;
+      display: none;
+      text-align: center;
+      width: 90%;
+      max-width: 500px;
+      background: rgba(10, 3, 20, 0.5);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      padding: 12px 20px;
+      border-radius: 20px;
+      border: 1px solid rgba(254, 205, 211, 0.15);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    .contador-titulo {
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #fb7185;
+      margin-bottom: 8px;
+    }
+
+    .contador-tiempo {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .tiempo-bloque {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 40px;
+    }
+
+    .tiempo-num {
+      font-size: clamp(1rem, 4vw, 1.4rem);
+      font-weight: 600;
+      color: #ffffff;
+      text-shadow: 0 0 8px rgba(255,255,255,0.4);
+    }
+
+    .tiempo-lbl {
+      font-size: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #fda4af;
+      margin-top: 2px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="modal">
+  <div class="card">
+    <div class="card-img-wrap">
+      <img src="https://images.unsplash.com/photo-1526047932273-341f2a7631f9?q=80&w=600&auto=format&fit=cover" alt="Jardín Mágico">
+    </div>
+    <div class="card-quote">"En nuestro propio jardín, cada flor me recuerda que contigo encontré mi lugar eterno." 🌹</div>
+    <!-- <div class="card-sub">Cultivando un amor sin final</div> -->
+    <button id="btn-entrar">
+      ✨ ENTRAR A NUESTRO MUNDO ✨
+    </button>
+  </div>
+</div>
+
+<div class="top-text" id="top-text">Nuestro amor florece eternamente ♡</div>
+
+<div id="contador-contenedor">
+  <div class="contador-titulo">✨ Tiempo Compartido Contigo ✨</div>
+  <div class="contador-tiempo" id="contador-reloj"></div>
+</div>
+
+<canvas id="jardin"></canvas>
+
+<audio id="musica" loop>
+  <source src="https://github.com/codeninja543/codeninja5433/raw/refs/heads/main/Umberto%20Tozzi%20-%20Te%20Amo%20(Letra).mp3" type="audio/mpeg">
+</audio>
+
+<script type="importmap">
+{"imports":{
+  "three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+
+const renderer = new THREE.WebGLRenderer({
+  canvas: document.getElementById('jardin'),
+  antialias: !isMobile, alpha: false, powerPreference: 'high-performance'
+});
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#0a0314');
+scene.fog = new THREE.FogExp2('#0a0314', 0.0018);
+
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 4000);
+camera.position.set(0, 30, isMobile ? 350 : 280);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.dampingFactor = 0.05;
+controls.minDistance = 80; controls.maxDistance = 600;
+controls.enablePan = false;
+controls.maxPolarAngle = Math.PI / 2 + 0.1;
+
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+const bloom = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight));
+bloom.threshold = 0.2; bloom.strength = 0.65; bloom.radius = 0.55;
+composer.addPass(bloom);
+
+const colorUtil = new THREE.Color();
+
+function heartFormula(t) {
+  return {
+    x: 16 * Math.pow(Math.sin(t), 3),
+    y: 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t)
+  };
+}
+
+const totalFlores = isMobile ? 3000 : 7000;
+const pGeo = new THREE.BufferGeometry();
+const pPos = new Float32Array(totalFlores * 3);
+const pCol = new Float32Array(totalFlores * 3);
+
+for(let i=0; i < totalFlores; i++) {
+  const t = Math.random() * Math.PI * 2;
+  const h = heartFormula(t);
+  const factorEscala = 4.5 + Math.random() * 1.5;
+  const scatterX = (Math.random() - 0.5) * 8;
+  const scatterY = (Math.random() - 0.5) * 8;
+  const scatterZ = (Math.random() - 0.5) * 22;
+
+  pPos[i*3] = h.x * factorEscala + scatterX;
+  pPos[i*3 + 1] = h.y * factorEscala + scatterY + 15;
+  pPos[i*3 + 2] = scatterZ;
+
+  const r = Math.random();
+  if(r < 0.5) colorUtil.setHex(0xf43f5e);
+  else if(r < 0.85) colorUtil.setHex(0xbe123c);
+  else colorUtil.setHex(0xfde047);
+  pCol[i*3] = colorUtil.r; pCol[i*3+1] = colorUtil.g; pCol[i*3+2] = colorUtil.b;
+}
+
+pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+pGeo.setAttribute('color', new THREE.BufferAttribute(pCol, 3));
+
+const materialCorazon = new THREE.PointsMaterial({
+  size: isMobile ? 2.5 : 3.2,
+  vertexColors: true,
+  blending: THREE.AdditiveBlending,
+  transparent: true,
+  opacity: 0.95,
+  depthWrite: false
+});
+const portalCorazon = new THREE.Points(pGeo, materialCorazon);
+scene.add(portalCorazon);
+
+
+const numPetalos = isMobile ? 150 : 300;
+const petalosGeo = new THREE.BufferGeometry();
+const petalosPos = new Float32Array(numPetalos * 3);
+const petalosVel = [];
+
+const canvasPetalo = document.createElement('canvas');
+canvasPetalo.width = 32;
+canvasPetalo.height = 32;
+const ctxPetalo = canvasPetalo.getContext('2d');
+ctxPetalo.beginPath();
+ctxPetalo.ellipse(16, 16, 14, 8, 0.5, 0, Math.PI * 2);
+ctxPetalo.fillStyle = '#ff69b4';
+ctxPetalo.fill();
+ctxPetalo.globalAlpha = 0.6;
+ctxPetalo.beginPath();
+ctxPetalo.ellipse(16, 16, 10, 6, 0.5, 0, Math.PI * 2);
+ctxPetalo.fillStyle = '#ff1493';
+ctxPetalo.fill();
+
+const texturaPetalo = new THREE.CanvasTexture(canvasPetalo);
+
+for(let i = 0; i < numPetalos; i++) {
+  petalosPos[i*3] = (Math.random() - 0.5) * 600;
+  petalosPos[i*3+1] = Math.random() * 300 - 50;
+  petalosPos[i*3+2] = (Math.random() - 0.5) * 600;
+  
+  petalosVel.push({
+    y: 0.3 + Math.random() * 1.2,
+    x: (Math.random() - 0.5) * 0.4,
+    z: (Math.random() - 0.5) * 0.4,
+    rot: Math.random() * Math.PI * 2,
+    speedRot: (Math.random() - 0.5) * 0.03
+  });
+}
+
+petalosGeo.setAttribute('position', new THREE.BufferAttribute(petalosPos, 3));
+
+const petalosMat = new THREE.PointsMaterial({
+  color: 0xff69b4,
+  size: isMobile ? 4 : 5,
+  transparent: true,
+  opacity: 0.7,
+  blending: THREE.AdditiveBlending,
+  depthWrite: false,
+  map: texturaPetalo,
+  sizeAttenuation: true
+});
+
+const petalosMesh = new THREE.Points(petalosGeo, petalosMat);
+scene.add(petalosMesh);
+
+
+const nLuciernagas = isMobile ? 400 : 900;
+const geoLuces = new THREE.BufferGeometry();
+const posLuces = new Float32Array(nLuciernagas * 3);
+for(let i=0; i<nLuciernagas; i++){
+  posLuces[i*3] = (Math.random() - 0.5) * 600;
+  posLuces[i*3 + 1] = (Math.random() * 250) - 50;
+  posLuces[i*3 + 2] = (Math.random() - 0.5) * 600;
+}
+geoLuces.setAttribute('position', new THREE.BufferAttribute(posLuces, 3));
+const matLuces = new THREE.PointsMaterial({
+  color: 0xffb7d5,
+  size: isMobile ? 2.0 : 2.5,
+  transparent: true,
+  opacity: 0.7,
+  blending: THREE.AdditiveBlending,
+  depthWrite: false
+});
+const luciernagas = new THREE.Points(geoLuces, matLuces);
+scene.add(luciernagas);
+
+
+const frases = [
+  "Te amo ❤️", "Eres mi todo 🥰", "Siempre tú ✨", "Mi vida 💖", "Mi amor 🌹",
+  "Contigo es mejor 😍", "Mi cielo 🌌", "Mi reina 👑", "Por siempre ♾️", "Eres mi paz 🕊️",
+  "Mi corazón 💓", "Eres luz 🌟", "Gracias por existir 🙏", "Tú y yo 👩‍❤️‍👨", "Mi hogar 🏠",
+  "Cada día más 📈", "Eternamente ♾️", "Mi felicidad 😄", "Te adoro 💞", "Eres magia 🪄"
+];
+
+const coloresTexto = [
+  { fill: '#ffffff', stroke: '#be123c' },
+  { fill: '#fecdd3', stroke: '#9f1239' },
+  { fill: '#ffe4e6', stroke: '#fb7185' }
+];
+
+const grupoTextos = new THREE.Group();
+scene.add(grupoTextos);
+const listaMaterialesTexto = [];
+
+function crearSpriteTexto(txt, col) {
+  const canvasText = document.createElement('canvas');
+  canvasText.width = 600; canvasText.height = 150;
+  const context = canvasText.getContext('2d');
+  
+  context.font = "bold 55px 'Quicksand', sans-serif";
+  context.textAlign = 'center'; context.textBaseline = 'middle';
+  
+  context.strokeStyle = col.stroke; context.lineWidth = 6;
+  context.strokeText(txt, 300, 75);
+  
+  context.fillStyle = col.fill;
+  context.fillText(txt, 300, 75);
+  
+  const textura = new THREE.CanvasTexture(canvasText);
+  const matSprite = new THREE.SpriteMaterial({ map: textura, transparent: true, opacity: 0 });
+  const sprite = new THREE.Sprite(matSprite);
+  return sprite;
+}
+
+for(let i=0; i<frases.length; i++) {
+  const colorElegido = coloresTexto[i % coloresTexto.length];
+  const sp = crearSpriteTexto(frases[i], colorElegido);
+  
+  const angulo = (i / frases.length) * Math.PI * 2;
+  const radio = 140 + Math.random() * 110;
+  
+  sp.position.set(
+    Math.cos(angulo) * radio,
+    (Math.random() - 0.5) * 120 + 20,
+    Math.sin(angulo) * radio + (Math.random() - 0.5) * 50
+  );
+  
+  const escalaW = isMobile ? 70 : 55;
+  sp.scale.set(escalaW, escalaW * 0.25, 1);
+  grupoTextos.add(sp);
+  listaMaterialesTexto.push(sp.material);
+}
+
+
+const luzAmbiental = new THREE.AmbientLight(0x2e1035, 0.6);
+scene.add(luzAmbiental);
+
+const luzPuntualCentro = new THREE.PointLight(0xff69b4, 4, 300);
+luzPuntualCentro.position.set(0, 15, 10);
+scene.add(luzPuntualCentro);
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  composer.setSize(window.innerWidth, window.innerHeight);
+});
+
+
+const fechaInicio = new Date('2022-07-24T00:00:00');
+
+function actualizarContador() {
+  const ahora = new Date();
+  let anos = ahora.getFullYear() - fechaInicio.getFullYear();
+  let meses = ahora.getMonth() - fechaInicio.getMonth();
+  let dias = ahora.getDate() - fechaInicio.getDate();
+
+  if(dias < 0) {
+    meses--;
+    const mesAnterior = new Date(ahora.getFullYear(), ahora.getMonth(), 0);
+    dias += mesAnterior.getDate();
+  }
+  if(meses < 0) {
+    anos--;
+    meses += 12;
+  }
+
+  const horas = ahora.getHours();
+  const minutos = ahora.getMinutes();
+  const segundos = ahora.getSeconds();
+
+  const contenedor = document.getElementById('contador-reloj');
+  contenedor.innerHTML = `
+    <div class="tiempo-bloque">
+      <span class="tiempo-num">${anos}</span>
+      <span class="tiempo-lbl">Años ❤️</span>
+    </div>
+    <div class="tiempo-bloque">
+      <span class="tiempo-num">${meses}</span>
+      <span class="tiempo-lbl">Meses 🥰</span>
+    </div>
+    <div class="tiempo-bloque">
+      <span class="tiempo-num">${dias}</span>
+      <span class="tiempo-lbl">Días 😊</span>
+    </div>
+    <div class="tiempo-bloque">
+      <span class="tiempo-num">${String(horas).padStart(2, '0')}</span>
+      <span class="tiempo-lbl">Horas 🕒</span>
+    </div>
+    <div class="tiempo-bloque">
+      <span class="tiempo-num">${String(minutos).padStart(2, '0')}</span>
+      <span class="tiempo-lbl">Min ⏳</span>
+    </div>
+    <div class="tiempo-bloque">
+      <span class="tiempo-num">${String(segundos).padStart(2, '0')}</span>
+      <span class="tiempo-lbl">Seg 💓</span>
+    </div>
+  `;
+}
+
+
+document.getElementById('btn-entrar').addEventListener('click', () => {
+  const m = document.getElementById('modal');
+  m.classList.add('oculto');
+  setTimeout(() => m.style.display = 'none', 1200);
+  
+  document.getElementById('top-text').style.display = 'block';
+  document.getElementById('contador-contenedor').style.display = 'block';
+  
+  actualizarContador();
+  setInterval(actualizarContador, 1000);
+  
+  const track = document.getElementById('musica');
+  track.currentTime = 16;
+  track.play().catch(() => {});
+});
+
+
+const reloj = new THREE.Clock();
+
+function animacion() {
+  requestAnimationFrame(animacion);
+  const tiempo = reloj.getElapsedTime();
+
+ 
+  portalCorazon.rotation.y = tiempo * 0.12;
+  portalCorazon.rotation.z = Math.sin(tiempo * 0.5) * 0.08;
+  portalCorazon.position.y = 15 + Math.sin(tiempo * 1.5) * 5;
+
+
+  const posP = petalosMesh.geometry.attributes.position.array;
+  for(let i = 0; i < numPetalos; i++) {
+    posP[i*3+1] -= petalosVel[i].y * 0.04;
+    posP[i*3] += petalosVel[i].x * 0.02;
+    posP[i*3+2] += petalosVel[i].z * 0.02;
+    
+    petalosVel[i].rot += petalosVel[i].speedRot;
+    
+    if(posP[i*3+1] < -50) {
+      posP[i*3+1] = 250;
+      posP[i*3] = (Math.random() - 0.5) * 600;
+      posP[i*3+2] = (Math.random() - 0.5) * 600;
+      petalosVel[i].y = 0.3 + Math.random() * 1.2;
+      petalosVel[i].x = (Math.random() - 0.5) * 0.4;
+      petalosVel[i].z = (Math.random() - 0.5) * 0.4;
+    }
+  }
+  petalosMesh.geometry.attributes.position.needsUpdate = true;
+
+
+  const posL = luciernagas.geometry.attributes.position.array;
+  for(let i=0; i<nLuciernagas; i++) {
+    posL[i*3 + 1] += Math.sin(tiempo + i) * 0.06;
+    posL[i*3] += Math.cos(tiempo * 0.2 + i) * 0.03;
+  }
+  luciernagas.geometry.attributes.position.needsUpdate = true;
+
+
+  grupoTextos.rotation.y = -tiempo * 0.05;
+  listaMaterialesTexto.forEach((mat, idx) => {
+    mat.opacity = 0.6 + Math.sin(tiempo * 1.2 + idx) * 0.4;
+  });
+
+
+  luzPuntualCentro.intensity = 3.5 + Math.sin(tiempo * 2.5) * 1.0;
+
+  controls.update();
+  composer.render();
+}
+
+animacion();
+</script>
+</body>
+</html>
